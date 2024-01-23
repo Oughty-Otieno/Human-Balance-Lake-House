@@ -1,102 +1,104 @@
-# Human Balance Lakehouse
+# Project: STEDI-Human-Balance-Analytics
 
-![datalake](./img/lakehouse.png)
+## Contents
 
-Using AWS Glue, AWS S3, Python, and Spark, create or generate Python  scripts to build a lakehouse solution in AWS that satisfies these  requirements from the STEDI data scientists. Project required from AWS Data Engineering nanodegree on Udacity.
++ [Problem Statement](#Problem-Statement)
++ [Project Discription](#Project-Discription)
++ [Project Datasets](#Project-Datasets)
++ [Implementation](#Implementation)
 
-## STACK
 
-- Python and Spark
-- AWS Glue
-- AWS Athena
-- AWS S3
+---
+## Problem Statement
 
-## DATA FOLDER (LANDING ZONES)
+The STEDI Team has been hard at work developing a hardware STEDI Step Trainer that:
+- trains the user to do a STEDI balance exercise
+- has sensors on the device that collect data to train a machine-learning algorithm to detect steps
+- has a companion mobile app that collects customer data and interacts with the device sensors
 
-To simulate the data coming from the various sources, you will need to  create your own S3 directories for  customer_landing,  step_trainer_landing, and accelerometer_landing, and copy the data folder there as a starting point.
+STEDI has heard from millions of early adopters who are willing to purchase the STEDI Step Trainers and use them.
 
-### **1. Customer Records**
+Several customers have already received their Step Trainers, installed the mobile application, and begun using them together to test their balance. The Step Trainer is just a motion sensor that records the distance of the object detected. The app uses a mobile phone accelerometer to detect motion in the X, Y, and Z directions.
 
-Contains the following fields:
+The STEDI team wants to use the motion sensor data to train a machine learning model to detect steps accurately in real-time. Privacy will be a primary consideration in deciding what data can be used.
 
-- serialnumber
-- sharewithpublicasofdate
-- birthday
-- registrationdate
-- sharewithresearchasofdate
-- customername
-- email
-- lastupdatedate
-- phone
-- sharewithfriendsasofdate
+Some of the early adopters have agreed to share their data for research purposes. Only these customers’ Step Trainer and accelerometer data should be used in the training data for the machine learning model.
 
-### **2. Step Trainer Records (data from the motion sensor):**
+---
 
-Contains the following fields:
+### Project Discription
 
-- sensorReadingTime
-- serialNumber
-- distanceFromObject
+In this project I extracted data produced by the STEDI Step Trainer sensors and the mobile app, and curated them into a data lakehouse solution on AWS. The intent is for Data Scientists to use the solution to train machine learning models. 
 
-### **3. Accelerometer Records (from the mobile app):**
+The Data lake solution is developed using AWS Glue, AWS S3, Python, and Spark for sensor data that trains machine learning algorithms.
 
-Contains the following fields:
+AWS infrastructure is used to create storage zones (landing, trusted and curated), data catalog, data transformations between zones and queries in semi-structured data.
 
-- timeStamp
-- user
-- x
-- y
-- z
+---
 
-There are  **two Glue tables** for the two landing zones: customer_landing.sql and accelerometer_landing.sql.
+## Project Datasets
 
-This is how it looks like customer_landing and accelerometer_landing querying them with **AWS Athena**:
+* Customer Records: from fulfillment and the STEDI website.  
+* Step Trainer Records: data from the motion sensor.
+* Accelerometer Records: data from the mobile app.
 
-![customer_landing](./img/customer_landing.png)
+---
 
-![accelerometer_landing](./img/accelerometer_landing.png)
+## Implementation
+<details>
+<summary>
+Landing Zone
+</summary>
 
-## TRUSTED AND CURATED ZONES
+> In the Landing Zone I stored the customer, accelerometer and step trainer raw data in AWS S3 bucket. 
 
-The Data Science team has done some preliminary data analysis and determined that the **Accelerometer Records** each match one of the **Customer Records**. They would like you to create 2 AWS Glue Jobs that do the following:
+Using The AWS glue data catalog, I created a glue tables so that I can query the data using AWS athena.
 
-1. Sanitize the  Customer data from the Website (Landing Zone) and only store the  Customer Records who agreed to share their data for research purposes  (Trusted Zone) - creating a Glue Table called **customer_trusted** (customer_trusted.py). Below the query from Athena of the customer_trusted s3 bucket:![customer_trusted](./img/customer_trusted.png)
+1- Customer Landing Table:
 
-   A screenshot that shows a select * statement from Athena showing the  customer landing data, where the resulting customer trusted data has no  rows where shareWithResearchAsOfDate is blank.
+![alt text](Screenshots/customer_landing.png)
 
-   ![customer_trusted_blank](./img/customer_trusted_blank.png)
+2- Accelerometer Landing Table: 
 
-2. Sanitize the Accelerometer data from the Mobile App (Landing Zone) - and only  store Accelerometer Readings from customers who agreed to share their  data for research purposes (Trusted Zone) - creating a Glue Table called **accelerometer_trusted**. Below the query from Athena of the accelerometer_trusted s3 bucket:![accelerometer_trusted](./img/accelerometer_trusted.png)
+![alt text](Screenshots/accelerometer_landing.png)
 
-**NOTE**:
+3- Step Trainer Landing Table: 
 
-For AWS Glue to act on your behalf to  access S3 and other resources, you need to grant access to the Glue  Service by creating an IAM Service Role that can be assumed by Glue:
+![alt text](Screenshots/step_trainer_landing.png)
 
-```
-aws iam create-role --role-name my-glue-service-role --assume-role-policy-document '{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Service": "glue.amazonaws.com"
-            },
-            "Action": "sts:AssumeRole"
-        }
-    ]
-}'
-```
+</details>
 
-Data Scientists have discovered a data quality issue with the Customer Data. The serial number should be a  unique identifier for the STEDI Step Trainer they purchased. However,  there was a defect in the fulfillment website, and it used the same 30  serial numbers over and over again for millions of customers!  Most  customers have not received their Step Trainers yet, but those who have, are submitting Step Trainer data over the IoT network (Landing Zone). *The data from the Step Trainer Records has the correct serial numbers.*
+<details>
+<summary>
+Trusted Zone
+</summary>
 
-The problem is that because of this  serial number bug in the fulfillment data (Landing Zone), we don’t know  which customer the Step Trainer Records data belongs to.
+> In the Trusted Zone, I created AWS Glue jobs to make transofrmations on the raw data in the landing zones.
 
-The Data Science team would like you to write a Glue job that does the following:
+**Glue job scripts**
 
-3. Sanitize the  Customer data (Trusted Zone) and create a Glue Table (Curated Zone) that only includes customers who have accelerometer data *and* have agreed to share their data for research called **customer_curated** (customer_curated.py).
+[1. customer_landing_to_trusted.py](customer_landing_to_trusted.py) - This script transfers customer data from the 'landing' to 'trusted' zones. It filters for customers who have agreed to share data with researchers.
 
-Finally, you need to create two Glue Studio jobs that do the following tasks:
+[2. accelerometer_landing_to_trusted_zone.py](accelerometer_landing_to_trusted_zone.py) - This script transfers accelerometer data from the 'landing' to 'trusted' zones. Using a join on customer_trusted and accelerometer_landing, It filters for Accelerometer readings from customers who have agreed to share data with researchers.
 
-4. Read the Step Trainer IoT data stream (S3) and populate a Trusted Zone Glue Table called **step_trainer_trusted** that contains the Step Trainer Records data for customers who have  accelerometer data and have agreed to share their data for research  (customer_curated). Look for it step_trainer_trusted.py
+[3. Trainer_landing_to_trusted.py](Trainer_landing_to_trusted.py) - This script transfers Step Trainer data from the 'landing' to 'trusted' zones. Using a join on customer_curated and step_trainer_landing, It filters for customers who have accelerometer data and have agreed to share their data for research with Step Trainer readings.
 
-5. Create an aggregated  table that has each of the Step Trainer Readings, and the associated  accelerometer reading data for the same timestamp, but only for  customers who have agreed to share their data, and make a glue table  called **machine_learning_curated.** You can find it in machine_learning_curated.py
+The customer_trusted table was queried in Athena to show that it only contains customer records from people who agreed to share their data.
+
+![alt text](Screenshots/customer_trusted_sharwithreasearchasofdate_null.png)
+</details>
+
+<details>
+<summary>
+Curated Zone
+</summary>
+
+> In the Curated Zone I created AWS Glue jobs to make further transformations, to meet the specific needs of a particular analysis.
+
+**Glue job scripts**
+
+[customer_trusted_to_curated.py](customer_trusted_to_curated.py) - This script transfers customer data from the 'trusted' to 'curated' zones. Using a join on customer_trusted and accelerometer_landing, It filters for customers with Accelerometer readings and have agreed to share data with researchers.
+
+[Trainer_trusted_to_curated.py](Trainer_trusted_to_curated.py): This script is used to build aggregated table that has each of the Step Trainer Readings, and the associated accelerometer reading data for the same timestamp, but only for customers who have agreed to share their data.
+
+</details>
