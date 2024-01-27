@@ -1,6 +1,6 @@
-CREATE EXTERNAL TABLE IF NOT EXISTS `stedi-project`.`accelerometer_landing` (
+CREATE EXTERNAL TABLE IF NOT EXISTS `eric-project-stedi-database`.`accelerometer_landing_table` (
   `user` string,
-  `timeStamp` bigint,
+  `timestamp` bigint,
   `x` float,
   `y` float,
   `z` float
@@ -13,5 +13,5 @@ WITH SERDEPROPERTIES (
   'mapping' = 'TRUE'
 )
 STORED AS INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
-LOCATION 's3://stedi-s3/accelerometer/landing/'
+LOCATION 's3://eric-project-stedi/accelerometer/landing/'
 TBLPROPERTIES ('classification' = 'json');
