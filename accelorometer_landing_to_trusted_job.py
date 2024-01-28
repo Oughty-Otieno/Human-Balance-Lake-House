@@ -48,17 +48,7 @@ Join_node1706263705882 = Join.apply(
 # Script generated for node Drop Fields
 DropFields_node1706267508285 = DropFields.apply(
     frame=Join_node1706263705882,
-    paths=[
-        "serialNumber",
-        "birthDay",
-        "shareWithResearchAsOfDate",
-        "registrationDate",
-        "customerName",
-        "email",
-        "lastUpdateDate",
-        "phone",
-        "shareWithFriendsAsOfDate",
-    ],
+    paths=["email", "phone"],
     transformation_ctx="DropFields_node1706267508285",
 )
 
@@ -69,7 +59,6 @@ accelerometer_trusted_node1706263832067 = glueContext.write_dynamic_frame.from_o
     format="json",
     connection_options={
         "path": "s3://eric-project-stedi/accelerometer/trusted/",
-        "compression": "snappy",
         "partitionKeys": [],
     },
     transformation_ctx="accelerometer_trusted_node1706263832067",
